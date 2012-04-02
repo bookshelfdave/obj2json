@@ -5,6 +5,7 @@
 
 import Data.Char
 import Data.Maybe
+import Data.List
 import Control.Monad
 import Text.Printf
 
@@ -22,7 +23,7 @@ data RawType =
 
 
 instance Show RawType where  
-	show (O s) = "Object"
+	show (O s) = s
 	show (V x y z) = printf "[%f,%f,%f]" x y z
 	show (VN x y z) = printf "[%f,%f,%f]" x y z
 	show (F fs) = show fs
@@ -95,6 +96,44 @@ getData "MTLLIB" line = MTLLIB m
 						where m = getStringData line
 getData _ line = Unknown line
 
+
+-- produces "\"Foo\"" from "Foo"
+jsonStr :: String -> String
+jsonStr s = "\"" ++ s ++ "\""
+
+
+jsonKeyValQuote :: String -> String -> String
+jsonKeyValQuote k v = jsonStr k ++ ":" ++ jsonStr v
+
+jsonKeyVal :: String -> String -> String
+jsonKeyVal k v = jsonStr k ++ ":" ++ v
+
+
+outputObject :: [RawType] -> IO ()
+outputObject objData = do
+						let nameNode = jsonKeyValQuote "name" $ show obj						
+						let vertsNode = jsonKeyVal "verts" $ show verts
+						let vertNormsNode = jsonKeyVal "vert_norms" $ show vertNorms
+						let facesNode = jsonKeyVal "faces" $ show faces
+						let odata = [nameNode, vertsNode, vertNormsNode, facesNode]
+						putStr "{"
+						mapM_ putStr $ intersperse "," odata
+						putStrLn "}"
+					   where 
+					   	verts = filter isVert objData
+					   	vertNorms = filter isVertNorm objData
+					   	faces = filter isFace objData					   	
+					   	obj = head $ filter isObj objData					   	
+
+outputObjects :: [RawType] -> IO ()
+outputObjects o = do
+				putStr "{"				
+				putStr $ jsonStr "objects"
+				putStr ": ["
+				-- eh, not correct for more than one object
+				outputObject o
+				putStrLn "]}"
+
 processLine :: String -> RawType
 processLine l = 
 			getData ft l
@@ -104,28 +143,11 @@ processLine l =
 processData :: String -> IO ()
 processData contents = 				
 					--mapM_ putStrLn mappedStrs >>					
-						outputObject mapped
+					outputObjects mapped
 				where 
 					ls = getDataLines contents
 					mapped = map processLine ls
-					mappedStrs = map show mapped
-
-outputObject :: [RawType] -> IO ()
-outputObject objData = do
-						putStrLn $ show verts
-						putStrLn $ show vertNorms
-						putStrLn $ show faces
-					   where 
-					   	verts = filter isVert objData
-					   	vertNorms = filter isVertNorm objData
-					   	faces = filter isFace objData					   	
-
-objsToJson :: [RawType] -> IO ()
-objsToJson o = do
-				putStrLn "{\"objects\":"
-				putStrLn "[]"
-				putStrLn "}"
-
+					--mappedStrs = map show mapped
 			  		
 main :: IO ()
 main = do
