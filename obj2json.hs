@@ -6,18 +6,49 @@
 import Data.Char
 import Data.Maybe
 import Control.Monad
+import Text.Printf
 
 -- raw types
 data RawType =
-		O String |
-		V Double Double Double  |
-		VN Double Double Double |
-		F [Int] |		
-		USEMTL String |
-		S String |
-		MTLLIB String |
-		Unknown String 
-		deriving (Show,Read)
+	O String |
+	V Double Double Double  |
+	VN Double Double Double |
+	F [Int] |		
+	USEMTL String |
+	S String |
+	MTLLIB String |
+	Unknown String 
+	deriving (Read)
+
+
+instance Show RawType where  
+	show (O s) = "Object"
+	show (V x y z) = printf "[%f,%f,%f]" x y z
+	show (VN x y z) = printf "[%f,%f,%f]" x y z
+	show (F fs) = show fs
+	show (USEMTL s) = "" 
+	show (S s) = ""
+	show (MTLLIB s) = ""
+	show (Unknown s) = ""
+
+-- maybe I'm missing a haskell-ism here
+isObj :: RawType -> Bool
+isObj (O xs) = True
+isObj _ = False
+
+isVert :: RawType -> Bool
+isVert (V x y z) = True
+isVert _ = False
+
+isVertNorm :: RawType -> Bool
+isVertNorm (VN x y z) = True
+isVertNorm _ = False
+
+isFace :: RawType -> Bool
+isFace (F xs) = True
+isFace _ = False
+
+
 
 firstToken :: String -> Maybe String
 firstToken [] = Nothing
@@ -49,9 +80,9 @@ getData "VN" line = VN (nums !! 0) (nums !! 1) (nums !! 2)
 						numStrings = tail $ words line
 						nums = map (\x -> read x :: Double) numStrings
 getData "F" line = F numData
-						where 
-							strData = words $ tail line
-							numData = map (\n -> read n :: Int) strData
+					where 
+						strData = words $ tail line
+						numData = map (\n -> read n :: Int) strData
 
 getData "O" line = O objname
 						where objname = getStringData line						
@@ -72,11 +103,29 @@ processLine l =
 
 processData :: String -> IO ()
 processData contents = 				
-					mapM_ putStrLn mappedStrs
+					--mapM_ putStrLn mappedStrs >>					
+						outputObject mapped
 				where 
 					ls = getDataLines contents
 					mapped = map processLine ls
 					mappedStrs = map show mapped
+
+outputObject :: [RawType] -> IO ()
+outputObject objData = do
+						putStrLn $ show verts
+						putStrLn $ show vertNorms
+						putStrLn $ show faces
+					   where 
+					   	verts = filter isVert objData
+					   	vertNorms = filter isVertNorm objData
+					   	faces = filter isFace objData					   	
+
+objsToJson :: [RawType] -> IO ()
+objsToJson o = do
+				putStrLn "{\"objects\":"
+				putStrLn "[]"
+				putStrLn "}"
+
 			  		
 main :: IO ()
 main = do
