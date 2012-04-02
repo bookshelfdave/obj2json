@@ -151,7 +151,7 @@ processData contents =
 			  		
 main :: IO ()
 main = do
-		contents <- readFile "cube.obj"
+		contents <- getContents
 		processData contents		
 		return ()
 

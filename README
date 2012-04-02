@@ -1,0 +1,1 @@
+cat cube.obj | obj2json
