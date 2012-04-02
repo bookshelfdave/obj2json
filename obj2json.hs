@@ -1,7 +1,4 @@
---module Main (main,getDataLines,processLine) where
--- Currently only supports one object per file.
--- partition lists based on line type = o and then call process data on
--- each segment
+-- TODO: Currently only supports one object per file.
 
 import Data.Char
 import Data.Maybe
@@ -80,10 +77,12 @@ getData "VN" line = VN (nums !! 0) (nums !! 1) (nums !! 2)
 					where 
 						numStrings = tail $ words line
 						nums = map (\x -> read x :: Double) numStrings
-getData "F" line = F numData
+-- renumber Face vert references starting at 0
+getData "F" line = F adjustedNumData
 					where 
 						strData = words $ tail line
 						numData = map (\n -> read n :: Int) strData
+						adjustedNumData = map (\n -> n - 1) numData
 
 getData "O" line = O objname
 						where objname = getStringData line						
@@ -130,7 +129,7 @@ outputObjects o = do
 				putStr "{"				
 				putStr $ jsonStr "objects"
 				putStr ": ["
-				-- eh, not correct for more than one object
+				-- TODO, not correct for more than one object
 				outputObject o
 				putStrLn "]}"
 

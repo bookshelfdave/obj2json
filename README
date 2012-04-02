@@ -1,5 +1,6 @@
 3d obj parser -> json format that I'm thinking of for another project.
 
+Note: Vert id's in faces are renumbered starting at 0
 
 As Howlin' Wolf said:
 Because I'm built for comfort, I ain't built for speed
